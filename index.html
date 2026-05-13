@@ -35,14 +35,23 @@
             .container { padding: 10px; }
             .header h1 { font-size: 20px; }
             .card { padding: 14px; }
+
+            /* 输入框居中，两边留距 */
+            .form-group, .form-row, .settings-row, .backup-btns, .backup-section textarea {
+                max-width: 300px;
+                margin-left: auto;
+                margin-right: auto;
+            }
             .form-row { flex-direction: column; gap: 0; }
-            .form-row .form-group { width: 100%; }
+            .form-row .form-group { width: 100%; max-width: none; }
             .form-group input, .form-group select { padding: 12px 14px; font-size: 16px; min-height: 44px; }
+
             .settings-row { flex-direction: column; align-items: stretch; }
-            .settings-row .btn { width: 100%; }
-            .btn { padding: 14px; font-size: 16px; min-height: 48px; }
+            .settings-row .btn { width: 100%; max-width: none; }
+
+            .btn { padding: 14px; font-size: 16px; min-height: 48px; max-width: 300px; margin-left: auto; margin-right: auto; }
             .backup-btns { flex-direction: column; }
-            .backup-btns .btn { width: 100%; padding: 14px; font-size: 16px; }
+            .backup-btns .btn { width: 100%; max-width: none; padding: 14px; font-size: 16px; }
             .backup-section textarea { font-size: 16px; }
             .share-text { font-size: 13px; padding: 12px; }
         }
