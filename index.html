@@ -36,7 +36,11 @@
             .form-row .form-group { width: 100%; }
             .form-group input, .form-group select { padding: 12px 14px; font-size: 16px; min-height: 44px; }
             .settings-row { flex-direction: column; align-items: stretch; }
+            .settings-row .btn { width: 100%; }
             .btn { padding: 14px; font-size: 16px; min-height: 48px; }
+            .backup-section .btn-secondary, .backup-section .btn-primary { width: 100%; }
+            .backup-section > div[style*="flex"] { flex-direction: column; }
+            .backup-section textarea { font-size: 16px; }
             .share-text { font-size: 13px; padding: 12px; }
         }
 
@@ -236,7 +240,7 @@
                     </div>
                     <div class="form-group">
                         <label>初始体重（kg）</label>
-                        <input type="number" id="setting_initial_weight" step="0.01" value="59.8">
+                        <input type="number" id="setting_initial_weight" step="0.01" value="87.65">
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:8px;">💾 保存设置</button>
@@ -265,8 +269,8 @@
         function initData() {
             if (!localStorage.getItem(LS_SETTINGS)) {
                 localStorage.setItem(LS_SETTINGS, JSON.stringify({
-                    start_date: '2025-06-19',
-                    initial_weight: 59.8
+                    start_date: '2026-05-13',
+                    initial_weight: 87.65
                 }));
             }
             if (!localStorage.getItem(LS_RECORDS)) {
