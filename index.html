@@ -27,6 +27,19 @@
         .form-row { display: flex; gap: 12px; }
         .form-row .form-group { flex: 1; }
 
+        /* 移动端适配 */
+        @media (max-width: 480px) {
+            .container { padding: 10px; }
+            .header h1 { font-size: 20px; }
+            .card { padding: 14px; }
+            .form-row { flex-direction: column; gap: 0; }
+            .form-row .form-group { width: 100%; }
+            .form-group input, .form-group select { padding: 12px 14px; font-size: 16px; min-height: 44px; }
+            .settings-row { flex-direction: column; align-items: stretch; }
+            .btn { padding: 14px; font-size: 16px; min-height: 48px; }
+            .share-text { font-size: 13px; padding: 12px; }
+        }
+
         .readonly { background: #f8f9fa; color: #888; }
         .auto-badge { display: inline-block; background: #e8f4fd; color: #3498db; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
 
@@ -160,7 +173,7 @@
                     </div>
                     <div class="form-group">
                         <label>今日体重（kg）</label>
-                        <input type="number" id="weight" step="0.1" placeholder="请输入今日体重" oninput="updateCumulativeLoss()">
+                        <input type="number" id="weight" step="0.01" placeholder="请输入今日体重" oninput="updateCumulativeLoss()">
                     </div>
 
                     <!-- 自动计算的项目 -->
@@ -223,7 +236,7 @@
                     </div>
                     <div class="form-group">
                         <label>初始体重（kg）</label>
-                        <input type="number" id="setting_initial_weight" step="0.1" value="59.8">
+                        <input type="number" id="setting_initial_weight" step="0.01" value="59.8">
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:8px;">💾 保存设置</button>
