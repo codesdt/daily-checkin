@@ -134,7 +134,7 @@
                             <input type="time" id="wake_time">
                         </div>
                         <div class="form-group">
-                            <label>昨日饮水量＞2000</label>
+                            <label>昨日饮水量＞2000（减重）</label>
                             <select id="water_over_2000">
                                 <option value="0">否</option>
                                 <option value="1">是</option>
@@ -158,10 +158,9 @@
                             <select id="vitamin_fish_oil">
                                 <option value="0">0次</option>
                                 <option value="1">1次</option>
-                                <option value="2">2次</option>
+                                <option value="2" selected>2次</option>
                                 <option value="3">3次</option>
                                 <option value="4">4次</option>
-                                <option value="5">5次</option>
                             </select>
                         </div>
                     </div>
@@ -171,10 +170,9 @@
                             <select id="bowel_movement">
                                 <option value="0">0次</option>
                                 <option value="1">1次</option>
-                                <option value="2">2次</option>
+                                <option value="2" selected>2次</option>
                                 <option value="3">3次</option>
                                 <option value="4">4次</option>
-                                <option value="5">5次</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -337,7 +335,7 @@
 管理进度：第${progress}天
 睡觉时间：${record.sleep_time || ''}
 起床时间：${record.wake_time || ''}
-昨日饮水量＞2000：${waterText}
+昨日饮水量＞2000（减重）：${waterText}
 昨日减重粉：${record.weight_loss_powder || 0}次
 维生素+鱼油：${record.vitamin_fish_oil || 0}次
 昨日排便：${record.bowel_movement || 0}次
@@ -426,8 +424,8 @@
                 document.getElementById('wake_time').value = '';
                 document.getElementById('water_over_2000').value = '0';
                 document.getElementById('weight_loss_powder').value = '0';
-                document.getElementById('vitamin_fish_oil').value = '0';
-                document.getElementById('bowel_movement').value = '0';
+                document.getElementById('vitamin_fish_oil').value = '2';
+                document.getElementById('bowel_movement').value = '2';
                 document.getElementById('exercise_minutes').value = '0';
                 document.getElementById('weight').value = '';
                 document.getElementById('cumulative_loss').value = '0.0';
@@ -527,7 +525,7 @@
                     <div id="detail-${i}" class="record-detail" style="display:none;">
                         <div class="detail-row"><span class="detail-label">睡觉时间</span><span class="detail-value">${r.sleep_time || '-'}</span></div>
                         <div class="detail-row"><span class="detail-label">起床时间</span><span class="detail-value">${r.wake_time || '-'}</span></div>
-                        <div class="detail-row"><span class="detail-label">饮水量＞2000</span><span class="detail-value">${r.water_over_2000 ? '是' : '否'}</span></div>
+                        <div class="detail-row"><span class="detail-label">饮水量＞2000（减重）</span><span class="detail-value">${r.water_over_2000 ? '是' : '否'}</span></div>
                         <div class="detail-row"><span class="detail-label">减重粉</span><span class="detail-value">${r.weight_loss_powder || 0}次</span></div>
                         <div class="detail-row"><span class="detail-label">维生素+鱼油</span><span class="detail-value">${r.vitamin_fish_oil || 0}次</span></div>
                         <div class="detail-row"><span class="detail-label">排便</span><span class="detail-value">${r.bowel_movement || 0}次</span></div>
