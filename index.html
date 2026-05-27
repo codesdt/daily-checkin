@@ -25,6 +25,7 @@
         .form-group input:focus, .form-group select:focus { border-color: #3498db; }
         .form-row { display: flex; gap: 12px; }
         .form-row .form-group { flex: 1; }
+        .form-group-full { width: 100%; }
         .backup-btns { display: flex; gap: 8px; margin-top: 8px; }
         .backup-btns .btn { width: auto; flex: 1; padding: 10px; font-size: 14px; }
         .backup-section { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #ddd; }
@@ -38,13 +39,24 @@
 
             /* 输入框居中，两边留距 */
             .form-group, .form-row, .settings-row, .backup-btns, .backup-section textarea {
-                max-width: 300px;
+                max-width: 340px;
+                width: 100%;
                 margin-left: auto;
                 margin-right: auto;
             }
-            .form-row { flex-direction: column; gap: 0; }
-            .form-row .form-group { width: 100%; max-width: none; }
-            .form-group input, .form-group select { padding: 12px 14px; font-size: 16px; min-height: 44px; }
+            .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .form-row .form-group { width: 100%; max-width: none; min-width: 0; margin: 0; }
+            .form-row .form-group-full { grid-column: 1 / -1; }
+            .form-group-full { max-width: 340px; }
+            .form-group input, .form-group select {
+                max-width: 100%;
+                min-width: 0;
+                padding: 12px 12px;
+                font-size: 16px;
+                min-height: 44px;
+            }
+            .form-group input[type="date"], .form-group input[type="time"] { line-height: 20px; }
+            .form-group label { min-height: 34px; line-height: 1.3; display: flex; align-items: flex-end; }
 
             .settings-row { flex-direction: column; align-items: stretch; }
             .settings-row .btn { width: 100%; max-width: none; }
@@ -57,6 +69,7 @@
             }
 
             .btn { padding: 14px; font-size: 16px; min-height: 48px; max-width: 300px; margin-left: auto; margin-right: auto; }
+            #checkin-form .btn { max-width: 340px; }
             .backup-btns { flex-direction: column; }
             .backup-btns .btn { width: 100%; max-width: none; padding: 14px; font-size: 16px; }
             .backup-section textarea { font-size: 16px; }
@@ -120,6 +133,10 @@
         .analysis-title { font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 10px; }
         .chart-box { width: 100%; min-height: 170px; border: 1px solid #edf1f5; border-radius: 8px; background: #fff; overflow: hidden; }
         .analysis-list { font-size: 13px; line-height: 1.8; color: #555; padding-left: 18px; }
+        @media (max-width: 480px) {
+            .settings-panel { max-width: 300px; }
+            .settings-panel .btn { max-width: none; }
+        }
     </style>
 </head>
 <body>
@@ -142,20 +159,22 @@
                 <form id="checkin-form">
                     <!-- 需要填写的项目 -->
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group form-group-full">
                             <label>打卡日期</label>
                             <input type="date" id="record_date_input">
-                        </div>
-                        <div class="form-group">
-                            <label>睡觉时间</label>
-                            <input type="time" id="sleep_time">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label>睡觉时间</label>
+                            <input type="time" id="sleep_time">
+                        </div>
+                        <div class="form-group">
                             <label>起床时间</label>
                             <input type="time" id="wake_time">
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>昨日饮水量＞2000（减重）</label>
                             <select id="water_over_2000">
@@ -163,8 +182,6 @@
                                 <option value="1">是</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
                             <label>昨日减重粉</label>
                             <select id="weight_loss_powder">
@@ -176,6 +193,8 @@
                                 <option value="5">5次</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>维生素+鱼油</label>
                             <select id="vitamin_fish_oil">
@@ -186,8 +205,6 @@
                                 <option value="4">4次</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
                             <label>昨日排便</label>
                             <select id="bowel_movement">
@@ -198,12 +215,14 @@
                                 <option value="4" selected>4次</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group form-group-full">
                             <label>昨日运动（分钟）</label>
                             <input type="number" id="exercise_minutes" min="0" value="0" placeholder="运动分钟数">
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group form-group-full">
                         <label>今日体重（kg）</label>
                         <input type="text" id="weight" inputmode="decimal" placeholder="可输入 87.5 或 175斤" oninput="updateCumulativeLoss()" onblur="normalizeWeightField()">
                     </div>
@@ -217,7 +236,7 @@
                             <input type="number" id="blood_pressure_diastolic" min="30" max="160" placeholder="例如 80">
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group form-group-full">
                         <label>心率（次/分钟）</label>
                         <input type="number" id="heart_rate" min="30" max="220" placeholder="例如 72">
                     </div>
