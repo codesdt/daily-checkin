@@ -48,12 +48,20 @@
 
             .settings-row { flex-direction: column; align-items: stretch; }
             .settings-row .btn { width: 100%; max-width: none; }
+            .settings-panel { max-width: 300px; }
+            .settings-panel .form-group, .settings-panel .settings-row, .settings-panel .backup-btns, .settings-panel .backup-section textarea {
+                max-width: none;
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
 
             .btn { padding: 14px; font-size: 16px; min-height: 48px; max-width: 300px; margin-left: auto; margin-right: auto; }
             .backup-btns { flex-direction: column; }
             .backup-btns .btn { width: 100%; max-width: none; padding: 14px; font-size: 16px; }
             .backup-section textarea { font-size: 16px; }
             .share-text { font-size: 13px; padding: 12px; }
+            .stat-grid { grid-template-columns: 1fr; max-width: 300px; margin-left: auto; margin-right: auto; }
         }
 
         .readonly { background: #f8f9fa; color: #888; }
@@ -96,8 +104,22 @@
         .settings-row { display: flex; gap: 12px; align-items: flex-end; }
         .settings-row .form-group { flex: 1; }
         .settings-row .btn { width: auto; padding: 10px 20px; font-size: 14px; }
+        .settings-panel { max-width: 420px; margin: 0 auto; }
+        .settings-panel .settings-row { align-items: stretch; }
+        .settings-panel .btn { max-width: none; }
+        .settings-panel .backup-section textarea { display: block; }
+        .settings-panel .backup-btns { width: 100%; }
         .empty-state { text-align: center; padding: 40px 20px; color: #bbb; }
         .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+        .stat-box { background: #f8fafc; border: 1px solid #edf1f5; border-radius: 8px; padding: 12px; }
+        .stat-label { font-size: 12px; color: #7f8c8d; margin-bottom: 6px; }
+        .stat-value { font-size: 20px; font-weight: 700; color: #2c3e50; }
+        .stat-note { font-size: 12px; color: #95a5a6; margin-top: 4px; line-height: 1.4; }
+        .analysis-section { margin-top: 18px; }
+        .analysis-title { font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 10px; }
+        .chart-box { width: 100%; min-height: 170px; border: 1px solid #edf1f5; border-radius: 8px; background: #fff; overflow: hidden; }
+        .analysis-list { font-size: 13px; line-height: 1.8; color: #555; padding-left: 18px; }
     </style>
 </head>
 <body>
@@ -109,6 +131,7 @@
         <div class="tabs">
             <div class="tab active" data-tab="checkin">今日打卡</div>
             <div class="tab" data-tab="history">历史记录</div>
+            <div class="tab" data-tab="analysis">统计分析</div>
             <div class="tab" data-tab="settings">设置</div>
         </div>
 
@@ -137,7 +160,7 @@
                             <label>昨日饮水量＞2000（减重）</label>
                             <select id="water_over_2000">
                                 <option value="0">否</option>
-                                <option value="1" selected>是</option>
+                                <option value="1">是</option>
                             </select>
                         </div>
                     </div>
@@ -147,7 +170,7 @@
                             <select id="weight_loss_powder">
                                 <option value="0">0次</option>
                                 <option value="1">1次</option>
-                                <option value="2" selected>2次</option>
+                                <option value="2">2次</option>
                                 <option value="3">3次</option>
                                 <option value="4">4次</option>
                                 <option value="5">5次</option>
@@ -170,15 +193,9 @@
                             <select id="bowel_movement">
                                 <option value="0">0次</option>
                                 <option value="1">1次</option>
-                                <option value="2" selected>2次</option>
+                                <option value="2">2次</option>
                                 <option value="3">3次</option>
-                                <option value="4">4次</option>
-                                <option value="5">5次</option>
-                                <option value="6">6次</option>
-                                <option value="7">7次</option>
-                                <option value="8">8次</option>
-                                <option value="9">9次</option>
-                                <option value="10">10次</option>
+                                <option value="4" selected>4次</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -188,7 +205,21 @@
                     </div>
                     <div class="form-group">
                         <label>今日体重（kg）</label>
-                        <input type="number" id="weight" step="0.01" placeholder="请输入今日体重" oninput="updateCumulativeLoss()">
+                        <input type="text" id="weight" inputmode="decimal" placeholder="可输入 87.5 或 175斤" oninput="updateCumulativeLoss()" onblur="normalizeWeightField()">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>收缩压（高压 mmHg）</label>
+                            <input type="number" id="blood_pressure_systolic" min="50" max="250" placeholder="例如 120">
+                        </div>
+                        <div class="form-group">
+                            <label>舒张压（低压 mmHg）</label>
+                            <input type="number" id="blood_pressure_diastolic" min="30" max="160" placeholder="例如 80">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>心率（次/分钟）</label>
+                        <input type="number" id="heart_rate" min="30" max="220" placeholder="例如 72">
                     </div>
 
                     <!-- 自动计算的项目 -->
@@ -240,31 +271,41 @@
             </div>
         </div>
 
+        <!-- 统计分析页面 -->
+        <div id="tab-analysis" style="display:none;">
+            <div class="card">
+                <div class="card-title">📊 统计分析</div>
+                <div id="analysis-content"></div>
+            </div>
+        </div>
+
         <!-- 设置页面 -->
         <div id="tab-settings" style="display:none;">
             <div class="card">
                 <div class="card-title">⚙️ 固定参数设置</div>
-                <div class="settings-row">
-                    <div class="form-group">
-                        <label>启动日期</label>
-                        <input type="date" id="setting_start_date">
+                <div class="settings-panel">
+                    <div class="settings-row">
+                        <div class="form-group">
+                            <label>启动日期</label>
+                            <input type="date" id="setting_start_date">
+                        </div>
+                        <div class="form-group">
+                            <label>初始体重（kg）</label>
+                            <input type="text" id="setting_initial_weight" inputmode="decimal" value="87.65" placeholder="可输入 87.65 或 175.3斤" onblur="normalizeInitialWeightField()">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>初始体重（kg）</label>
-                        <input type="number" id="setting_initial_weight" step="0.01" value="87.65">
-                    </div>
-                </div>
-                <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:8px;">💾 保存设置</button>
+                    <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:8px;">💾 保存设置</button>
 
-                <div class="backup-section">
-                    <div class="card-title" style="font-size:14px;">💾 数据备份与导入</div>
-                    <p style="font-size:12px;color:#999;margin-bottom:8px;">所有数据存储在浏览器本地，换设备会丢失。建议定期备份。</p>
-                    <textarea id="backup-text" placeholder="点击「导出数据」生成备份文本..."></textarea>
-                    <div class="backup-btns">
-                        <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
-                        <button class="btn btn-primary" onclick="importData()">导入数据</button>
+                    <div class="backup-section">
+                        <div class="card-title" style="font-size:14px;">💾 数据备份与导入</div>
+                        <p style="font-size:12px;color:#999;margin-bottom:8px;">所有数据存储在浏览器本地，换设备会丢失。建议定期备份。</p>
+                        <textarea id="backup-text" placeholder="点击「导出数据」生成备份文本..."></textarea>
+                        <div class="backup-btns">
+                            <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
+                            <button class="btn btn-primary" onclick="importData()">导入数据</button>
+                        </div>
+                        <button class="btn btn-danger" onclick="clearAllData()">🚫 清空所有数据</button>
                     </div>
-                    <button class="btn btn-danger" onclick="clearAllData()">🚫 清空所有数据</button>
                 </div>
             </div>
         </div>
@@ -346,6 +387,8 @@
 维生素+鱼油：${record.vitamin_fish_oil || 0}次
 昨日排便：${record.bowel_movement || 0}次
 昨日运动：${record.exercise_minutes || 0}分钟
+血压：${formatBloodPressure(record)}
+心率：${record.heart_rate || ''}${record.heart_rate ? '次/分钟' : ''}
 初始体重：${settings.initial_weight}kg
 昨日体重：${yesterdayWeight !== null ? yesterdayWeight + 'kg' : ''}
 今日体重：${record.weight || ''}kg
@@ -366,6 +409,54 @@
             return (d.getFullYear() % 100) + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
         }
 
+        function getCurrentTimeValue() {
+            const now = new Date();
+            return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        function parseWeightInput(value) {
+            const text = String(value || '').trim().toLowerCase();
+            if (!text) return null;
+            const numericText = text.replace(/[，,]/g, '.').replace(/[^\d.\-]/g, '');
+            const weight = parseFloat(numericText);
+            if (isNaN(weight) || weight <= 0) return null;
+            const isJin = text.includes('斤') || text.includes('jin') || text.includes('j');
+            return isJin ? weight / 2 : weight;
+        }
+
+        function formatWeightKg(weight) {
+            return Number(weight).toFixed(2).replace(/\.?0+$/, '');
+        }
+
+        function parsePositiveNumber(value) {
+            const num = parseFloat(value);
+            return !isNaN(num) && num > 0 ? num : null;
+        }
+
+        function formatBloodPressure(record) {
+            if (record.blood_pressure_systolic && record.blood_pressure_diastolic) {
+                return record.blood_pressure_systolic + '/' + record.blood_pressure_diastolic + 'mmHg';
+            }
+            return '';
+        }
+
+        function normalizeWeightField() {
+            const field = document.getElementById('weight');
+            const weight = parseWeightInput(field.value);
+            if (weight !== null) {
+                field.value = formatWeightKg(weight);
+            }
+            updateCumulativeLoss();
+        }
+
+        function normalizeInitialWeightField() {
+            const field = document.getElementById('setting_initial_weight');
+            const weight = parseWeightInput(field.value);
+            if (weight !== null) {
+                field.value = formatWeightKg(weight);
+            }
+        }
+
         // ===== Tab切换 =====
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -374,16 +465,18 @@
                 const name = tab.dataset.tab;
                 document.getElementById('tab-checkin').style.display = name === 'checkin' ? 'block' : 'none';
                 document.getElementById('tab-history').style.display = name === 'history' ? 'block' : 'none';
+                document.getElementById('tab-analysis').style.display = name === 'analysis' ? 'block' : 'none';
                 document.getElementById('tab-settings').style.display = name === 'settings' ? 'block' : 'none';
                 if (name === 'history') loadHistory();
+                if (name === 'analysis') loadAnalysis();
                 if (name === 'settings') loadSettings();
             });
         });
 
         function updateCumulativeLoss() {
-            const w = parseFloat(document.getElementById('weight').value);
+            const w = parseWeightInput(document.getElementById('weight').value);
             const settings = getSettings();
-            if (!isNaN(w) && w > 0) {
+            if (w !== null) {
                 document.getElementById('cumulative_loss').value = (settings.initial_weight - w).toFixed(1);
             } else {
                 document.getElementById('cumulative_loss').value = '0.0';
@@ -421,19 +514,25 @@
                 document.getElementById('bowel_movement').value = record.bowel_movement;
                 document.getElementById('exercise_minutes').value = record.exercise_minutes;
                 document.getElementById('weight').value = record.weight || '';
+                document.getElementById('blood_pressure_systolic').value = record.blood_pressure_systolic || '';
+                document.getElementById('blood_pressure_diastolic').value = record.blood_pressure_diastolic || '';
+                document.getElementById('heart_rate').value = record.heart_rate || '';
                 const cumulativeLoss = (record.weight && record.weight > 0)
                     ? (settings.initial_weight - record.weight).toFixed(1)
                     : '0.0';
                 document.getElementById('cumulative_loss').value = cumulativeLoss;
             } else {
-                document.getElementById('sleep_time').value = '';
-                document.getElementById('wake_time').value = '';
-                document.getElementById('water_over_2000').value = '1';
-                document.getElementById('weight_loss_powder').value = '2';
+                document.getElementById('sleep_time').value = '22:00';
+                document.getElementById('wake_time').value = getCurrentTimeValue();
+                document.getElementById('water_over_2000').value = '0';
+                document.getElementById('weight_loss_powder').value = '0';
                 document.getElementById('vitamin_fish_oil').value = '2';
-                document.getElementById('bowel_movement').value = '2';
+                document.getElementById('bowel_movement').value = '4';
                 document.getElementById('exercise_minutes').value = '0';
                 document.getElementById('weight').value = '';
+                document.getElementById('blood_pressure_systolic').value = '';
+                document.getElementById('blood_pressure_diastolic').value = '';
+                document.getElementById('heart_rate').value = '';
                 document.getElementById('cumulative_loss').value = '0.0';
             }
         }
@@ -453,7 +552,7 @@
                 return;
             }
 
-            const weightVal = document.getElementById('weight').value;
+            const weightVal = parseWeightInput(document.getElementById('weight').value);
             const record = {
                 record_date: recordDate,
                 sleep_time: document.getElementById('sleep_time').value,
@@ -463,7 +562,10 @@
                 vitamin_fish_oil: parseInt(document.getElementById('vitamin_fish_oil').value) || 0,
                 bowel_movement: parseInt(document.getElementById('bowel_movement').value) || 0,
                 exercise_minutes: parseInt(document.getElementById('exercise_minutes').value) || 0,
-                weight: weightVal ? parseFloat(weightVal) : null,
+                blood_pressure_systolic: parsePositiveNumber(document.getElementById('blood_pressure_systolic').value),
+                blood_pressure_diastolic: parsePositiveNumber(document.getElementById('blood_pressure_diastolic').value),
+                heart_rate: parsePositiveNumber(document.getElementById('heart_rate').value),
+                weight: weightVal,
                 created_at: new Date().toISOString()
             };
 
@@ -524,7 +626,9 @@
                         <span class="arrow">▶</span>
                     </div>
                     <div class="record-summary">
-                        体重 <span class="record-weight">${r.weight || '-'}㏕</span> ·
+                        体重 <span class="record-weight">${r.weight || '-'}kg</span> ·
+                        血压 ${formatBloodPressure(r) || '-'} ·
+                        心率 ${r.heart_rate || '-'} ·
                         减重粉 ${r.weight_loss_powder || 0}次 ·
                         运动 ${r.exercise_minutes || 0}分钟
                     </div>
@@ -536,8 +640,10 @@
                         <div class="detail-row"><span class="detail-label">维生素+鱼油</span><span class="detail-value">${r.vitamin_fish_oil || 0}次</span></div>
                         <div class="detail-row"><span class="detail-label">排便</span><span class="detail-value">${r.bowel_movement || 0}次</span></div>
                         <div class="detail-row"><span class="detail-label">运动</span><span class="detail-value">${r.exercise_minutes || 0}分钟</span></div>
-                        <div class="detail-row"><span class="detail-label">体重</span><span class="detail-value">${r.weight || '-'}㏕</span></div>
-                        <div class="detail-row"><span class="detail-label">累计减重</span><span class="detail-value">${(r.weight ? (settings.initial_weight - r.weight).toFixed(1) : '0.0')}㏕</span></div>
+                        <div class="detail-row"><span class="detail-label">血压</span><span class="detail-value">${formatBloodPressure(r) || '-'}</span></div>
+                        <div class="detail-row"><span class="detail-label">心率</span><span class="detail-value">${r.heart_rate ? r.heart_rate + '次/分钟' : '-'}</span></div>
+                        <div class="detail-row"><span class="detail-label">体重</span><span class="detail-value">${r.weight || '-'}kg</span></div>
+                        <div class="detail-row"><span class="detail-label">累计减重</span><span class="detail-value">${(r.weight ? (settings.initial_weight - r.weight).toFixed(1) : '0.0')}kg</span></div>
                         <div class="detail-section">
                             <div class="detail-section-title">📤 分享文本</div>
                             <div class="share-text" id="share-text-${i}" style="max-height:200px;margin-bottom:8px;">${generateShareText(r, settings)}</div>
@@ -581,17 +687,203 @@
             }
         }
 
+        // ===== 统计分析 =====
+        function getAnalysisRecords() {
+            return getRecords().slice().sort((a, b) => a.record_date.localeCompare(b.record_date));
+        }
+
+        function getNumericSeries(records, key) {
+            return records
+                .filter(r => r[key] !== null && r[key] !== undefined && r[key] !== '')
+                .map(r => ({ date: r.record_date, value: parseFloat(r[key]) }))
+                .filter(item => !isNaN(item.value));
+        }
+
+        function summarizeSeries(series) {
+            if (series.length === 0) return null;
+            const values = series.map(item => item.value);
+            const first = values[0];
+            const last = values[values.length - 1];
+            const sum = values.reduce((total, value) => total + value, 0);
+            return {
+                count: values.length,
+                first,
+                last,
+                avg: sum / values.length,
+                min: Math.min(...values),
+                max: Math.max(...values),
+                change: last - first
+            };
+        }
+
+        function formatSigned(value, digits) {
+            const fixed = value.toFixed(digits);
+            return value > 0 ? '+' + fixed : fixed;
+        }
+
+        function renderLineChart(seriesList, unit) {
+            seriesList = seriesList.filter(series => series.items.length > 0);
+            const allValues = seriesList.flatMap(series => series.items.map(item => item.value));
+            if (allValues.length < 2) {
+                return '<div class="empty-state" style="padding:55px 20px;">至少 2 条数据后显示趋势图</div>';
+            }
+
+            const dates = [...new Set(seriesList.flatMap(series => series.items.map(item => item.date)))].sort();
+            const min = Math.min(...allValues);
+            const max = Math.max(...allValues);
+            const range = max - min || 1;
+            const pad = range * 0.15;
+            const low = min - pad;
+            const high = max + pad;
+            const width = 560;
+            const height = 170;
+            const left = 38;
+            const right = 16;
+            const top = 18;
+            const bottom = 30;
+            const xForDate = date => left + (dates.indexOf(date) / Math.max(dates.length - 1, 1)) * (width - left - right);
+            const yForValue = value => top + ((high - value) / (high - low)) * (height - top - bottom);
+
+            const lines = seriesList.map(series => {
+                const points = series.items.map(item => `${xForDate(item.date).toFixed(1)},${yForValue(item.value).toFixed(1)}`).join(' ');
+                const last = series.items[series.items.length - 1];
+                const labelX = Math.min(xForDate(last.date) + 6, width - 90);
+                const labelY = yForValue(last.value);
+                return `
+                    <polyline fill="none" stroke="${series.color}" stroke-width="3" points="${points}" />
+                    ${series.items.map(item => `<circle cx="${xForDate(item.date).toFixed(1)}" cy="${yForValue(item.value).toFixed(1)}" r="3" fill="${series.color}" />`).join('')}
+                    <text x="${labelX}" y="${labelY - 6}" font-size="11" fill="${series.color}">${series.name}</text>
+                `;
+            }).join('');
+
+            return `
+                <svg viewBox="0 0 ${width} ${height}" width="100%" height="170" role="img" aria-label="趋势图">
+                    <line x1="${left}" y1="${top}" x2="${left}" y2="${height - bottom}" stroke="#e8edf2" />
+                    <line x1="${left}" y1="${height - bottom}" x2="${width - right}" y2="${height - bottom}" stroke="#e8edf2" />
+                    <text x="8" y="${top + 4}" font-size="11" fill="#95a5a6">${max.toFixed(1)}${unit}</text>
+                    <text x="8" y="${height - bottom}" font-size="11" fill="#95a5a6">${min.toFixed(1)}${unit}</text>
+                    ${dates.map((date, index) => {
+                        if (index !== 0 && index !== dates.length - 1 && dates.length > 4) return '';
+                        const label = date.slice(5).replace('-', '/');
+                        return `<text x="${xForDate(date) - 14}" y="${height - 10}" font-size="11" fill="#95a5a6">${label}</text>`;
+                    }).join('')}
+                    ${lines}
+                </svg>
+            `;
+        }
+
+        function getBloodPressureStatus(latest) {
+            if (!latest || !latest.blood_pressure_systolic || !latest.blood_pressure_diastolic) return '暂无血压数据';
+            if (latest.blood_pressure_systolic >= 140 || latest.blood_pressure_diastolic >= 90) return '最近一次血压偏高，建议持续观察';
+            if (latest.blood_pressure_systolic < 90 || latest.blood_pressure_diastolic < 60) return '最近一次血压偏低，留意身体感受';
+            return '最近一次血压在常见参考范围内';
+        }
+
+        function getLatestRecordWith(records, predicate) {
+            return records.slice().reverse().find(predicate) || null;
+        }
+
+        function loadAnalysis() {
+            const records = getAnalysisRecords();
+            const container = document.getElementById('analysis-content');
+            if (records.length === 0) {
+                container.innerHTML = '<div class="empty-state">还没有记录，保存几天数据后再来看趋势</div>';
+                return;
+            }
+
+            const weightSeries = getNumericSeries(records, 'weight');
+            const systolicSeries = getNumericSeries(records, 'blood_pressure_systolic');
+            const diastolicSeries = getNumericSeries(records, 'blood_pressure_diastolic');
+            const heartRateSeries = getNumericSeries(records, 'heart_rate');
+            const bowelSeries = getNumericSeries(records, 'bowel_movement');
+            const exerciseSeries = getNumericSeries(records, 'exercise_minutes');
+            const weightSummary = summarizeSeries(weightSeries);
+            const systolicSummary = summarizeSeries(systolicSeries);
+            const diastolicSummary = summarizeSeries(diastolicSeries);
+            const heartRateSummary = summarizeSeries(heartRateSeries);
+            const bowelSummary = summarizeSeries(bowelSeries);
+            const exerciseSummary = summarizeSeries(exerciseSeries);
+            const latest = records[records.length - 1];
+            const latestWeight = weightSeries.length ? weightSeries[weightSeries.length - 1].value : null;
+            const latestHeartRate = heartRateSeries.length ? heartRateSeries[heartRateSeries.length - 1].value : null;
+            const latestBpRecord = getLatestRecordWith(records, r => r.blood_pressure_systolic && r.blood_pressure_diastolic);
+            const latestBp = latestBpRecord ? formatBloodPressure(latestBpRecord) : '-';
+            const weightNote = weightSummary
+                ? `较首条 ${formatSigned(weightSummary.change, 1)}kg，范围 ${weightSummary.min.toFixed(1)}-${weightSummary.max.toFixed(1)}kg`
+                : '暂无体重数据';
+            const bpNote = systolicSummary && diastolicSummary
+                ? `平均 ${systolicSummary.avg.toFixed(0)}/${diastolicSummary.avg.toFixed(0)}mmHg，${getBloodPressureStatus(latestBpRecord)}`
+                : '暂无血压数据';
+            const heartNote = heartRateSummary
+                ? `平均 ${heartRateSummary.avg.toFixed(0)}，范围 ${heartRateSummary.min.toFixed(0)}-${heartRateSummary.max.toFixed(0)}次/分钟`
+                : '暂无心率数据';
+
+            container.innerHTML = `
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">记录天数</div>
+                        <div class="stat-value">${records.length}天</div>
+                        <div class="stat-note">最近：${formatDateDisplay(latest.record_date)}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">最新体重</div>
+                        <div class="stat-value">${latestWeight ? formatWeightKg(latestWeight) + 'kg' : '-'}</div>
+                        <div class="stat-note">${weightNote}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">最新血压</div>
+                        <div class="stat-value">${latestBp}</div>
+                        <div class="stat-note">${bpNote}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">最新心率</div>
+                        <div class="stat-value">${latestHeartRate ? latestHeartRate + '次/分' : '-'}</div>
+                        <div class="stat-note">${heartNote}</div>
+                    </div>
+                </div>
+
+                <div class="analysis-section">
+                    <div class="analysis-title">体重趋势</div>
+                    <div class="chart-box">${renderLineChart([{ name: '体重', color: '#e74c3c', items: weightSeries }], 'kg')}</div>
+                </div>
+
+                <div class="analysis-section">
+                    <div class="analysis-title">血压趋势</div>
+                    <div class="chart-box">${renderLineChart([
+                        { name: '收缩压', color: '#3498db', items: systolicSeries },
+                        { name: '舒张压', color: '#27ae60', items: diastolicSeries }
+                    ], 'mmHg')}</div>
+                </div>
+
+                <div class="analysis-section">
+                    <div class="analysis-title">心率趋势</div>
+                    <div class="chart-box">${renderLineChart([{ name: '心率', color: '#9b59b6', items: heartRateSeries }], '次/分')}</div>
+                </div>
+
+                <div class="analysis-section">
+                    <div class="analysis-title">综合观察</div>
+                    <ul class="analysis-list">
+                        <li>${weightSummary ? `体重平均 ${weightSummary.avg.toFixed(1)}kg，最近趋势 ${formatSigned(weightSummary.change, 1)}kg。` : '体重数据还不足。'}</li>
+                        <li>${bpNote}</li>
+                        <li>${heartNote}</li>
+                        <li>${bowelSummary ? `排便平均 ${bowelSummary.avg.toFixed(1)}次/天。` : '排便数据还不足。'}${exerciseSummary ? `运动平均 ${exerciseSummary.avg.toFixed(0)}分钟/天。` : ''}</li>
+                    </ul>
+                </div>
+            `;
+        }
+
         // ===== 设置 =====
         function loadSettings() {
             const settings = getSettings();
             document.getElementById('setting_start_date').value = settings.start_date;
-            document.getElementById('setting_initial_weight').value = settings.initial_weight;
+            document.getElementById('setting_initial_weight').value = formatWeightKg(settings.initial_weight);
         }
 
         function saveSettings() {
+            const initialWeight = parseWeightInput(document.getElementById('setting_initial_weight').value);
             const settings = {
                 start_date: document.getElementById('setting_start_date').value,
-                initial_weight: parseFloat(document.getElementById('setting_initial_weight').value) || 59.8
+                initial_weight: initialWeight || 59.8
             };
             saveSettingsData(settings);
             showToast('✅ 设置已保存！');
