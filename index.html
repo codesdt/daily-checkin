@@ -6,8 +6,9 @@
     <title>每日身体记录</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; min-height: 100vh; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        html { width: 100%; overflow-x: hidden; }
+        body { width: 100%; overflow-x: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; min-height: 100vh; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 16px; }
 
         .header { text-align: center; padding: 24px 0 16px; }
         .header h1 { font-size: 22px; color: #2c3e50; }
@@ -33,32 +34,82 @@
 
         /* 移动端适配 */
         @media (max-width: 480px) {
-            .container { padding: 10px; }
+            body { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+            .container {
+                max-width: 100%;
+                padding: 12px 10px calc(104px + env(safe-area-inset-bottom));
+            }
+            .header { padding: 18px 0 14px; }
             .header h1 { font-size: 20px; }
-            .card { padding: 14px; }
+            .tabs { border-radius: 14px; margin-bottom: 14px; }
+            .tab { padding: 12px 4px; font-size: 15px; white-space: nowrap; }
+            .card { padding: 16px 14px; border-radius: 14px; overflow: hidden; }
+            .card-title { font-size: 18px; margin-bottom: 18px; }
+            #checkin-form { max-width: 300px; margin: 0 auto; }
 
-            /* 输入框居中，两边留距 */
             .form-group, .form-row, .settings-row, .backup-btns, .backup-section textarea {
-                max-width: 340px;
+                max-width: none;
                 width: 100%;
                 margin-left: auto;
                 margin-right: auto;
             }
-            .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-            .form-row .form-group { width: 100%; max-width: none; min-width: 0; margin: 0; }
+            .form-row {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+                column-gap: 14px;
+                row-gap: 0;
+                align-items: start;
+            }
+            .form-row .form-group {
+                width: 100%;
+                max-width: none;
+                min-width: 0;
+                margin: 0 0 14px;
+            }
             .form-row .form-group-full { grid-column: 1 / -1; }
-            .form-group-full { max-width: 340px; }
+            .form-group-full { max-width: none; }
             .form-group input, .form-group select {
+                display: block;
+                width: 100%;
                 max-width: 100%;
                 min-width: 0;
-                padding: 12px 12px;
+                height: 48px;
+                min-height: 48px;
+                padding: 0 12px;
                 font-size: 16px;
-                min-height: 44px;
+                line-height: normal;
+                border-radius: 10px;
+                background-color: #fff;
             }
-            .form-group input[type="date"], .form-group input[type="time"] { line-height: 20px; }
-            .form-group label { min-height: 34px; line-height: 1.3; display: flex; align-items: flex-end; }
+            .form-group input[type="date"], .form-group input[type="time"] {
+                -webkit-appearance: none;
+                appearance: none;
+                text-align: left;
+            }
+            .form-group input[type="date"] { padding-right: 18px; }
+            .form-group input[type="date"]::-webkit-date-and-time-value,
+            .form-group input[type="time"]::-webkit-date-and-time-value {
+                min-height: 20px;
+                text-align: left;
+            }
+            .form-group input[type="date"]::-webkit-calendar-picker-indicator,
+            .form-group input[type="time"]::-webkit-calendar-picker-indicator {
+                margin-left: auto;
+            }
+            .form-group input[type="date"]::-webkit-calendar-picker-indicator { margin-right: 3px; }
+            .form-group label {
+                min-height: 30px;
+                line-height: 1.3;
+                display: flex;
+                align-items: flex-end;
+            }
 
-            .settings-row { flex-direction: column; align-items: stretch; }
+            .settings-row {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0;
+                align-items: stretch;
+            }
             .settings-row .btn { width: 100%; max-width: none; }
             .settings-panel { max-width: 300px; }
             .settings-panel .form-group, .settings-panel .settings-row, .settings-panel .backup-btns, .settings-panel .backup-section textarea {
@@ -68,13 +119,13 @@
                 margin-right: 0;
             }
 
-            .btn { padding: 14px; font-size: 16px; min-height: 48px; max-width: 300px; margin-left: auto; margin-right: auto; }
-            #checkin-form .btn { max-width: 340px; }
+            .btn { padding: 14px; font-size: 16px; min-height: 50px; max-width: none; margin-left: auto; margin-right: auto; border-radius: 10px; }
+            #checkin-form .btn { max-width: none; }
             .backup-btns { flex-direction: column; }
             .backup-btns .btn { width: 100%; max-width: none; padding: 14px; font-size: 16px; }
             .backup-section textarea { font-size: 16px; }
             .share-text { font-size: 13px; padding: 12px; }
-            .stat-grid { grid-template-columns: 1fr; max-width: 300px; margin-left: auto; margin-right: auto; }
+            .stat-grid { grid-template-columns: 1fr; max-width: none; margin-left: auto; margin-right: auto; }
         }
 
         .readonly { background: #f8f9fa; color: #888; }
@@ -135,6 +186,16 @@
         .analysis-list { font-size: 13px; line-height: 1.8; color: #555; padding-left: 18px; }
         @media (max-width: 480px) {
             .settings-panel { max-width: 300px; }
+            .settings-panel .settings-row {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            .settings-panel .form-group, .settings-panel .settings-row, .settings-panel .backup-btns, .settings-panel .backup-section textarea {
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
             .settings-panel .btn { max-width: none; }
         }
     </style>
