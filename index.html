@@ -31,6 +31,7 @@
         .subsection-title { font-size: 13px; color: #666; font-weight: 600; margin-bottom: 10px; }
         .backup-btns { display: flex; gap: 8px; margin-top: 8px; }
         .backup-btns .btn { width: auto; flex: 1; padding: 10px; font-size: 14px; }
+        .backup-btns .btn-copy { margin-top: 0; }
         .backup-section { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #ddd; }
         .backup-section textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; font-family: monospace; resize: vertical; }
 
@@ -88,11 +89,15 @@
                 appearance: none;
                 text-align: left;
             }
+            .form-group input[type="time"] { text-align: center; }
             .form-group input[type="date"] { padding-right: 18px; }
-            .form-group input[type="date"]::-webkit-date-and-time-value,
-            .form-group input[type="time"]::-webkit-date-and-time-value {
+            .form-group input[type="date"]::-webkit-date-and-time-value {
                 min-height: 20px;
                 text-align: left;
+            }
+            .form-group input[type="time"]::-webkit-date-and-time-value {
+                min-height: 20px;
+                text-align: center;
             }
             .form-group input[type="date"]::-webkit-calendar-picker-indicator,
             .form-group input[type="time"]::-webkit-calendar-picker-indicator {
@@ -394,9 +399,10 @@
                     <div class="backup-section">
                         <div class="card-title" style="font-size:14px;">💾 数据备份与导入</div>
                         <p style="font-size:12px;color:#999;margin-bottom:8px;">所有数据存储在浏览器本地，换设备会丢失。建议定期备份。</p>
-                        <textarea id="backup-text" placeholder="点击「导出数据」生成备份文本..."></textarea>
+                        <textarea id="backup-text" placeholder="点击「导出文件」生成 JSON 备份，也可一键复制..."></textarea>
                         <div class="backup-btns">
-                            <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
+                            <button class="btn btn-secondary" onclick="exportData()">导出文件</button>
+                            <button class="btn btn-copy" onclick="copyBackupJson()">复制JSON</button>
                             <button class="btn btn-primary" onclick="importData()">导入数据</button>
                         </div>
                         <button class="btn btn-danger" onclick="clearAllData()">🚫 清空所有数据</button>
@@ -1061,8 +1067,41 @@
             };
             const json = JSON.stringify(data, null, 2);
             document.getElementById('backup-text').value = json;
-            navigator.clipboard.writeText(json).then(() => {
-                showToast('📋 数据已复制到剪贴板！');
+            const dateStr = new Date().toISOString().split('T')[0];
+            const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `daily-checkin-backup-${dateStr}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('✅ 已导出备份文件');
+        }
+
+        function copyBackupJson() {
+            let text = document.getElementById('backup-text').value.trim();
+            if (!text) {
+                const data = {
+                    settings: getSettings(),
+                    records: getRecords(),
+                    exported_at: new Date().toISOString()
+                };
+                text = JSON.stringify(data, null, 2);
+                document.getElementById('backup-text').value = text;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('📋 JSON 已复制到剪贴板！');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('📋 JSON 已复制！');
             });
         }
 
@@ -1085,7 +1124,13 @@
         }
 
         function clearAllData() {
-            if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
+            const confirmed = confirm('⚠️ 警告：这会永久清空所有本地记录和设置，且无法恢复。建议先导出备份文件。确定继续吗？');
+            if (!confirmed) return;
+            const keyword = prompt('最后确认：请输入“清空”两个字，才会删除所有数据。');
+            if (keyword !== '清空') {
+                showToast('已取消清空');
+                return;
+            }
             localStorage.removeItem(LS_SETTINGS);
             localStorage.removeItem(LS_RECORDS);
             initData();
