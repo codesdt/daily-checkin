@@ -24,6 +24,8 @@
         .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
         .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; }
         .form-group input:focus, .form-group select:focus { border-color: #3498db; }
+        .form-group input[type="date"] { cursor: pointer; }
+        .form-group input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; cursor: pointer; }
         .form-row { display: flex; gap: 12px; }
         .form-row .form-group { flex: 1; }
         .form-group-full { width: 100%; }
@@ -1223,8 +1225,23 @@
             loadToday();
         }
 
+        function enableDatePickers() {
+            ['record_date_input', 'setting_start_date'].forEach((id) => {
+                const field = document.getElementById(id);
+                if (!field) return;
+                const openPicker = () => {
+                    if (typeof field.showPicker === 'function') {
+                        try { field.showPicker(); } catch (e) {}
+                    }
+                };
+                field.addEventListener('click', openPicker);
+                field.addEventListener('focus', openPicker);
+            });
+        }
+
         // ===== 初始化 =====
         initData();
+        enableDatePickers();
         loadToday();
     </script>
 </body>
