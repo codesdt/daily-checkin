@@ -24,10 +24,8 @@
         .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
         .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; }
         .form-group input:focus, .form-group select:focus { border-color: #3498db; }
-        .form-group input[type="date"],
-        .form-group input[type="datetime-local"] { cursor: pointer; }
-        .form-group input[type="date"]::-webkit-calendar-picker-indicator,
-        .form-group input[type="datetime-local"]::-webkit-calendar-picker-indicator { opacity: 1; cursor: pointer; }
+        .form-group input[type="date"] { cursor: pointer; }
+        .form-group input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; cursor: pointer; }
         .form-row { display: flex; gap: 12px; }
         .form-row .form-group { flex: 1; }
         .form-group-full { width: 100%; }
@@ -214,17 +212,17 @@
                     <div class="form-row">
                         <div class="form-group form-group-full">
                             <label>打卡日期</label>
-                            <input type="datetime-local" id="record_date_input" onblur="normalizeRecordDateField()">
+                            <input type="date" id="record_date_input" onblur="normalizeRecordDateField()">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>睡觉时间</label>
-                            <input type="datetime-local" id="sleep_time" class="time-input" onblur="normalizeDateTimeField('sleep_time')">
+                            <label>睡觉日期</label>
+                            <input type="date" id="sleep_time" class="time-input" onblur="normalizeDateTimeField('sleep_time')">
                         </div>
                         <div class="form-group">
-                            <label>起床时间</label>
-                            <input type="datetime-local" id="wake_time" class="time-input" onblur="normalizeDateTimeField('wake_time')">
+                            <label>起床日期</label>
+                            <input type="date" id="wake_time" class="time-input" onblur="normalizeDateTimeField('wake_time')">
                         </div>
                     </div>
                     <div class="form-row">
@@ -345,7 +343,7 @@
                     <div class="settings-row">
                         <div class="form-group">
                             <label>启动日期</label>
-                            <input type="datetime-local" id="setting_start_date" onblur="normalizeSettingStartDateField()">
+                            <input type="date" id="setting_start_date" onblur="normalizeSettingStartDateField()">
                         </div>
                         <div class="form-group">
                             <label>初始体重（kg）</label>
@@ -381,7 +379,7 @@
             if (!localStorage.getItem(LS_SETTINGS)) {
                 localStorage.setItem(LS_SETTINGS, JSON.stringify({
                     start_date: '2026-05-13',
-                    start_datetime: '2026-05-13T08:00',
+                    start_datetime: '2026-05-13',
                     initial_weight: 87.65
                 }));
             }
@@ -491,17 +489,14 @@
         }
 
         function formatDateTimeDisplay(value) {
-            if (!value) return '';
-            const d = new Date(String(value).replace(' ', 'T'));
-            if (isNaN(d.getTime())) return value;
-            return `${(d.getFullYear() % 100)}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            return formatDateDisplay(value);
         }
 
-        function getCurrentDateTimeValue() {
+        function getCurrentDateValue() {
             const now = new Date();
             const offset = now.getTimezoneOffset();
             const local = new Date(now.getTime() - offset * 60000);
-            return local.toISOString().slice(0, 16);
+            return local.toISOString().slice(0, 10);
         }
 
         function normalizeDateValue(value) {
@@ -522,28 +517,24 @@
 
         function normalizeRecordDateField() {
             const field = document.getElementById('record_date_input');
-            field.value = normalizeDateTimeLocalValue(field.value);
+            field.value = normalizeDateValue(field.value);
             loadToday();
             document.getElementById('share-card').style.display = 'none';
         }
 
         function normalizeSettingStartDateField() {
             const field = document.getElementById('setting_start_date');
-            field.value = normalizeDateTimeLocalValue(field.value);
+            field.value = normalizeDateValue(field.value);
         }
 
         function normalizeDateTimeLocalValue(value) {
-            const text = String(value || '').trim();
-            if (!text) return '';
-            const d = new Date(text.replace(' ', 'T'));
-            if (isNaN(d.getTime())) return text;
-            const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-            return local.toISOString().slice(0, 16);
+            // 兼容旧调用：现在统一为仅日期
+            return normalizeDateValue(value);
         }
 
         function normalizeDateTimeField(id) {
             const field = document.getElementById(id);
-            field.value = normalizeDateTimeLocalValue(field.value);
+            field.value = normalizeDateValue(field.value);
         }
 
         function parseWeightInput(value) {
@@ -611,32 +602,30 @@
         // ===== 今日打卡页面 =====
         function loadToday() {
             const settings = getSettings();
-            const nowDateTime = getCurrentDateTimeValue();
-            const todayStr = nowDateTime.split('T')[0];
+            const todayStr = getCurrentDateValue();
             const dateInput = document.getElementById('record_date_input');
 
             // 如果日期输入框没值，默认今天
             if (!dateInput.value) {
-                dateInput.value = nowDateTime;
+                dateInput.value = todayStr;
             }
 
-            const recordDateTime = normalizeDateTimeLocalValue(dateInput.value) || nowDateTime;
-            dateInput.value = recordDateTime;
-            const recordDate = recordDateTime.split('T')[0];
+            const recordDate = normalizeDateValue(dateInput.value) || todayStr;
+            dateInput.value = recordDate;
             const record = getRecordByDate(recordDate);
             const yesterdayW = getYesterdayWeight(recordDate);
             const progress = calculateProgressDays(settings.start_date, recordDate);
 
-            document.getElementById('today-label').textContent = formatDateTimeDisplay(recordDateTime);
+            document.getElementById('today-label').textContent = formatDateDisplay(recordDate);
             document.getElementById('progress_days').value = '第' + progress + '天';
             document.getElementById('start_date_display').value = formatDateTimeDisplay(settings.start_datetime || settings.start_date);
             document.getElementById('initial_weight_display').value = settings.initial_weight + 'kg';
             document.getElementById('yesterday_weight').value = yesterdayW !== null ? yesterdayW + 'kg' : '无数据';
 
             if (record) {
-                document.getElementById('record_date_input').value = record.record_datetime || `${record.record_date}T08:00`;
-                document.getElementById('sleep_time').value = record.sleep_time || `${record.record_date}T22:00`;
-                document.getElementById('wake_time').value = record.wake_time || `${record.record_date}T08:00`;
+                document.getElementById('record_date_input').value = normalizeDateValue(record.record_datetime || record.record_date);
+                document.getElementById('sleep_time').value = normalizeDateValue(record.sleep_time || record.record_date);
+                document.getElementById('wake_time').value = normalizeDateValue(record.wake_time || record.record_date);
                 document.getElementById('water_over_2000').value = record.water_over_2000;
                 document.getElementById('weight_loss_powder').value = record.weight_loss_powder;
                 document.getElementById('vitamin_fish_oil').value = record.vitamin_fish_oil;
@@ -648,8 +637,8 @@
                     : '0.0';
                 document.getElementById('cumulative_loss').value = cumulativeLoss;
             } else {
-                document.getElementById('sleep_time').value = `${todayStr}T22:00`;
-                document.getElementById('wake_time').value = nowDateTime;
+                document.getElementById('sleep_time').value = todayStr;
+                document.getElementById('wake_time').value = todayStr;
                 document.getElementById('water_over_2000').value = '0';
                 document.getElementById('weight_loss_powder').value = '0';
                 document.getElementById('vitamin_fish_oil').value = '2';
@@ -669,20 +658,19 @@
         // ===== 保存打卡 =====
         document.getElementById('checkin-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const recordDateTime = normalizeDateTimeLocalValue(document.getElementById('record_date_input').value);
-            if (!recordDateTime) {
+            const recordDate = normalizeDateValue(document.getElementById('record_date_input').value);
+            if (!recordDate) {
                 showToast('请选择打卡日期');
                 return;
             }
-            document.getElementById('record_date_input').value = recordDateTime;
-            const recordDate = recordDateTime.split('T')[0];
+            document.getElementById('record_date_input').value = recordDate;
 
             const weightVal = parseWeightInput(document.getElementById('weight').value);
             const record = {
                 record_date: recordDate,
-                record_datetime: recordDateTime,
-                sleep_time: normalizeDateTimeLocalValue(document.getElementById('sleep_time').value),
-                wake_time: normalizeDateTimeLocalValue(document.getElementById('wake_time').value),
+                record_datetime: recordDate,
+                sleep_time: normalizeDateValue(document.getElementById('sleep_time').value),
+                wake_time: normalizeDateValue(document.getElementById('wake_time').value),
                 water_over_2000: parseInt(document.getElementById('water_over_2000').value) || 0,
                 weight_loss_powder: parseInt(document.getElementById('weight_loss_powder').value) || 0,
                 vitamin_fish_oil: parseInt(document.getElementById('vitamin_fish_oil').value) || 0,
@@ -952,18 +940,17 @@
         // ===== 设置 =====
         function loadSettings() {
             const settings = getSettings();
-            document.getElementById('setting_start_date').value = settings.start_datetime || `${settings.start_date}T08:00`;
+            document.getElementById('setting_start_date').value = normalizeDateValue(settings.start_datetime || settings.start_date);
             document.getElementById('setting_initial_weight').value = formatWeightKg(settings.initial_weight);
         }
 
         function saveSettings() {
             const initialWeight = parseWeightInput(document.getElementById('setting_initial_weight').value);
-            const startDateTime = normalizeDateTimeLocalValue(document.getElementById('setting_start_date').value) || getCurrentDateTimeValue();
-            document.getElementById('setting_start_date').value = startDateTime;
-            const startDate = startDateTime.split('T')[0];
+            const startDate = normalizeDateValue(document.getElementById('setting_start_date').value) || getCurrentDateValue();
+            document.getElementById('setting_start_date').value = startDate;
             const settings = {
                 start_date: startDate,
-                start_datetime: startDateTime,
+                start_datetime: startDate,
                 initial_weight: initialWeight || 59.8
             };
             saveSettingsData(settings);
