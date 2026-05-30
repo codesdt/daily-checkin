@@ -217,12 +217,12 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>睡觉日期</label>
-                            <input type="date" id="sleep_time" class="time-input" onblur="normalizeDateTimeField('sleep_time')">
+                            <label>睡觉时间</label>
+                            <input type="time" id="sleep_time" class="time-input" onblur="normalizeTimeField('sleep_time')">
                         </div>
                         <div class="form-group">
-                            <label>起床日期</label>
-                            <input type="date" id="wake_time" class="time-input" onblur="normalizeDateTimeField('wake_time')">
+                            <label>起床时间</label>
+                            <input type="time" id="wake_time" class="time-input" onblur="normalizeTimeField('wake_time')">
                         </div>
                     </div>
                     <div class="form-row">
@@ -460,8 +460,8 @@
             return `启动日期：${startDateDisplay}
 打卡日期：${recordDateDisplay}
 管理进度：第${progress}天
-睡觉时间：${formatDateTimeDisplay(record.sleep_time) || ''}
-起床时间：${formatDateTimeDisplay(record.wake_time) || ''}
+睡觉时间：${formatTimeDisplay(record.sleep_time) || ''}
+起床时间：${formatTimeDisplay(record.wake_time) || ''}
 昨日饮水量＞2000（减重）：${waterText}
 昨日减重粉：${record.weight_loss_powder || 0}次
 维生素+鱼油：${record.vitamin_fish_oil || 0}次
@@ -535,6 +535,25 @@
         function normalizeDateTimeField(id) {
             const field = document.getElementById(id);
             field.value = normalizeDateValue(field.value);
+        }
+
+        function normalizeTimeValue(value) {
+            const text = String(value || '').trim();
+            if (!text) return '';
+            const m = text.match(/(\d{1,2}):(\d{2})/);
+            if (!m) return '';
+            const hh = String(Math.min(23, Math.max(0, parseInt(m[1], 10)))).padStart(2, '0');
+            const mm = String(Math.min(59, Math.max(0, parseInt(m[2], 10)))).padStart(2, '0');
+            return `${hh}:${mm}`;
+        }
+
+        function normalizeTimeField(id) {
+            const field = document.getElementById(id);
+            field.value = normalizeTimeValue(field.value);
+        }
+
+        function formatTimeDisplay(value) {
+            return normalizeTimeValue(value) || '';
         }
 
         function parseWeightInput(value) {
@@ -624,8 +643,8 @@
 
             if (record) {
                 document.getElementById('record_date_input').value = normalizeDateValue(record.record_datetime || record.record_date);
-                document.getElementById('sleep_time').value = normalizeDateValue(record.sleep_time || record.record_date);
-                document.getElementById('wake_time').value = normalizeDateValue(record.wake_time || record.record_date);
+                document.getElementById('sleep_time').value = normalizeTimeValue(record.sleep_time) || '22:00';
+                document.getElementById('wake_time').value = normalizeTimeValue(record.wake_time) || '08:00';
                 document.getElementById('water_over_2000').value = record.water_over_2000;
                 document.getElementById('weight_loss_powder').value = record.weight_loss_powder;
                 document.getElementById('vitamin_fish_oil').value = record.vitamin_fish_oil;
@@ -637,8 +656,8 @@
                     : '0.0';
                 document.getElementById('cumulative_loss').value = cumulativeLoss;
             } else {
-                document.getElementById('sleep_time').value = todayStr;
-                document.getElementById('wake_time').value = todayStr;
+                document.getElementById('sleep_time').value = '22:00';
+                document.getElementById('wake_time').value = '08:00';
                 document.getElementById('water_over_2000').value = '0';
                 document.getElementById('weight_loss_powder').value = '0';
                 document.getElementById('vitamin_fish_oil').value = '2';
@@ -669,8 +688,8 @@
             const record = {
                 record_date: recordDate,
                 record_datetime: recordDate,
-                sleep_time: normalizeDateValue(document.getElementById('sleep_time').value),
-                wake_time: normalizeDateValue(document.getElementById('wake_time').value),
+                sleep_time: normalizeTimeValue(document.getElementById('sleep_time').value),
+                wake_time: normalizeTimeValue(document.getElementById('wake_time').value),
                 water_over_2000: parseInt(document.getElementById('water_over_2000').value) || 0,
                 weight_loss_powder: parseInt(document.getElementById('weight_loss_powder').value) || 0,
                 vitamin_fish_oil: parseInt(document.getElementById('vitamin_fish_oil').value) || 0,
@@ -742,8 +761,8 @@
                         运动 ${r.exercise_minutes || 0}分钟
                     </div>
                     <div id="detail-${i}" class="record-detail" style="display:none;">
-                        <div class="detail-row"><span class="detail-label">睡觉时间</span><span class="detail-value">${formatDateTimeDisplay(r.sleep_time) || '-'}</span></div>
-                        <div class="detail-row"><span class="detail-label">起床时间</span><span class="detail-value">${formatDateTimeDisplay(r.wake_time) || '-'}</span></div>
+                        <div class="detail-row"><span class="detail-label">睡觉时间</span><span class="detail-value">${formatTimeDisplay(r.sleep_time) || '-'}</span></div>
+                        <div class="detail-row"><span class="detail-label">起床时间</span><span class="detail-value">${formatTimeDisplay(r.wake_time) || '-'}</span></div>
                         <div class="detail-row"><span class="detail-label">饮水量＞2000（减重）</span><span class="detail-value">${r.water_over_2000 ? '是' : '否'}</span></div>
                         <div class="detail-row"><span class="detail-label">减重粉</span><span class="detail-value">${r.weight_loss_powder || 0}次</span></div>
                         <div class="detail-row"><span class="detail-label">维生素+鱼油</span><span class="detail-value">${r.vitamin_fish_oil || 0}次</span></div>
