@@ -23,6 +23,7 @@
         .form-group { margin-bottom: 14px; }
         .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
         .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; }
+        .time-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .form-group input:focus, .form-group select:focus { border-color: #3498db; }
         .form-group input[type="date"] { cursor: pointer; }
         .form-group input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; cursor: pointer; }
@@ -42,7 +43,10 @@
             body { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
             .container {
                 max-width: 100%;
-                padding: 12px 10px calc(104px + env(safe-area-inset-bottom));
+                padding-top: 12px;
+                padding-right: calc(14px + env(safe-area-inset-right));
+                padding-bottom: calc(104px + env(safe-area-inset-bottom));
+                padding-left: calc(14px + env(safe-area-inset-left));
             }
             .header { padding: 18px 0 14px; }
             .header h1 { font-size: 20px; }
@@ -50,7 +54,7 @@
             .tab { padding: 12px 4px; font-size: 15px; white-space: nowrap; }
             .card { padding: 16px 14px; border-radius: 14px; overflow: hidden; }
             .card-title { font-size: 18px; margin-bottom: 18px; }
-            #checkin-form { max-width: 300px; margin: 0 auto; }
+            #checkin-form { width: 100%; max-width: none; margin: 0; }
 
             .form-group, .form-row, .settings-row, .backup-btns, .backup-section textarea {
                 max-width: none;
@@ -86,9 +90,22 @@
                 border-radius: 10px;
                 background-color: #fff;
             }
-            .time-input { text-align: center; }
+            .form-group input[type="date"],
+            .form-group input[type="time"] {
+                -webkit-appearance: auto;
+                appearance: auto;
+                line-height: 1.2;
+                min-height: 48px;
+            }
+            #record_date_input,
+            #setting_start_date {
+                width: calc(100% - 4px);
+                margin-right: 4px;
+                padding-right: 34px;
+            }
+            .time-input { text-align: left; }
             .form-group label {
-                min-height: 30px;
+                min-height: 22px;
                 line-height: 1.3;
                 display: flex;
                 align-items: flex-end;
@@ -97,11 +114,11 @@
             .settings-row {
                 display: grid;
                 grid-template-columns: 1fr;
-                gap: 0;
+                gap: 12px;
                 align-items: stretch;
             }
             .settings-row .btn { width: 100%; max-width: none; }
-            .settings-panel { max-width: 300px; }
+            .settings-panel { width: 100%; max-width: none; padding: 0 2px; }
             .settings-panel .form-group, .settings-panel .settings-row, .settings-panel .backup-btns, .settings-panel .backup-section textarea {
                 max-width: none;
                 width: 100%;
@@ -175,11 +192,11 @@
         .chart-box { width: 100%; min-height: 170px; border: 1px solid #edf1f5; border-radius: 8px; background: #fff; overflow: hidden; }
         .analysis-list { font-size: 13px; line-height: 1.8; color: #555; padding-left: 18px; }
         @media (max-width: 480px) {
-            .settings-panel { max-width: 300px; }
+            .settings-panel { width: 100%; max-width: none; }
             .settings-panel .settings-row {
                 display: grid;
                 grid-template-columns: 1fr;
-                gap: 0;
+                gap: 12px;
             }
             .settings-panel .form-group, .settings-panel .settings-row, .settings-panel .backup-btns, .settings-panel .backup-section textarea {
                 width: 100%;
@@ -218,11 +235,17 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>睡觉时间</label>
-                            <input type="time" id="sleep_time" class="time-input" onblur="normalizeTimeField('sleep_time')">
+                            <div class="time-pair">
+                                <select id="sleep_hour" class="time-input"></select>
+                                <select id="sleep_minute" class="time-input"></select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>起床时间</label>
-                            <input type="time" id="wake_time" class="time-input" onblur="normalizeTimeField('wake_time')">
+                            <div class="time-pair">
+                                <select id="wake_hour" class="time-input"></select>
+                                <select id="wake_minute" class="time-input"></select>
+                            </div>
                         </div>
                     </div>
                     <div class="form-row">
@@ -268,14 +291,14 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group form-group-full">
+                        <div class="form-group">
+                            <label>今日体重（kg）</label>
+                            <input type="text" id="weight" inputmode="decimal" placeholder="请输入公斤，例如 87.5" oninput="updateCumulativeLoss()" onblur="normalizeWeightField()">
+                        </div>
+                        <div class="form-group">
                             <label>昨日运动（分钟）</label>
                             <input type="number" id="exercise_minutes" min="0" value="0" placeholder="运动分钟数">
                         </div>
-                    </div>
-                    <div class="form-group form-group-full">
-                        <label>今日体重（kg）</label>
-                        <input type="text" id="weight" inputmode="decimal" placeholder="请输入公斤，例如 87.5" oninput="updateCumulativeLoss()" onblur="normalizeWeightField()">
                     </div>
 
                     <!-- 自动计算的项目 -->
@@ -556,6 +579,57 @@
             return normalizeTimeValue(value) || '';
         }
 
+        function buildHourOptions() {
+            const options = [];
+            for (let h = 0; h < 24; h += 1) {
+                const hh = String(h).padStart(2, '0');
+                options.push(`<option value="${hh}">${hh}时</option>`);
+            }
+            return options.join('');
+        }
+
+        function buildMinuteOptions() {
+            const options = [];
+            for (let m = 0; m < 60; m += 1) {
+                const mm = String(m).padStart(2, '0');
+                options.push(`<option value="${mm}">${mm}分</option>`);
+            }
+            return options.join('');
+        }
+
+        function setTimePair(prefix, value, fallback) {
+            const [hh, mm] = (normalizeTimeValue(value) || fallback).split(':');
+            document.getElementById(`${prefix}_hour`).value = hh;
+            document.getElementById(`${prefix}_minute`).value = mm;
+        }
+
+        function getTimePair(prefix) {
+            const hh = document.getElementById(`${prefix}_hour`).value || '00';
+            const mm = document.getElementById(`${prefix}_minute`).value || '00';
+            return `${hh}:${mm}`;
+        }
+
+        function initTimeSelects() {
+            const hourHtml = buildHourOptions();
+            const minuteHtml = buildMinuteOptions();
+            ['sleep_hour', 'wake_hour'].forEach((id) => {
+                const field = document.getElementById(id);
+                if (field && !field.dataset.inited) {
+                    field.innerHTML = hourHtml;
+                    field.dataset.inited = '1';
+                }
+            });
+            ['sleep_minute', 'wake_minute'].forEach((id) => {
+                const field = document.getElementById(id);
+                if (field && !field.dataset.inited) {
+                    field.innerHTML = minuteHtml;
+                    field.dataset.inited = '1';
+                }
+            });
+            setTimePair('sleep', '22:00', '22:00');
+            setTimePair('wake', '08:00', '08:00');
+        }
+
         function parseWeightInput(value) {
             const text = String(value || '').trim().toLowerCase();
             if (!text) return null;
@@ -655,8 +729,8 @@
 
             if (record) {
                 document.getElementById('record_date_input').value = normalizeDateValue(record.record_datetime || record.record_date);
-                document.getElementById('sleep_time').value = normalizeTimeValue(record.sleep_time) || '22:00';
-                document.getElementById('wake_time').value = normalizeTimeValue(record.wake_time) || '08:00';
+                setTimePair('sleep', record.sleep_time, '22:00');
+                setTimePair('wake', record.wake_time, '08:00');
                 document.getElementById('water_over_2000').value = record.water_over_2000;
                 document.getElementById('weight_loss_powder').value = record.weight_loss_powder;
                 document.getElementById('vitamin_fish_oil').value = record.vitamin_fish_oil;
@@ -668,8 +742,8 @@
                     : '0.0';
                 document.getElementById('cumulative_loss').value = cumulativeLoss;
             } else {
-                document.getElementById('sleep_time').value = '22:00';
-                document.getElementById('wake_time').value = '08:00';
+                setTimePair('sleep', '22:00', '22:00');
+                setTimePair('wake', '08:00', '08:00');
                 document.getElementById('water_over_2000').value = '1';
                 document.getElementById('weight_loss_powder').value = '2';
                 document.getElementById('vitamin_fish_oil').value = '2';
@@ -705,8 +779,8 @@
             const record = {
                 record_date: recordDate,
                 record_datetime: recordDate,
-                sleep_time: normalizeTimeValue(document.getElementById('sleep_time').value),
-                wake_time: normalizeTimeValue(document.getElementById('wake_time').value),
+                sleep_time: normalizeTimeValue(getTimePair('sleep')),
+                wake_time: normalizeTimeValue(getTimePair('wake')),
                 water_over_2000: parseInt(document.getElementById('water_over_2000').value) || 0,
                 weight_loss_powder: parseInt(document.getElementById('weight_loss_powder').value) || 0,
                 vitamin_fish_oil: parseInt(document.getElementById('vitamin_fish_oil').value) || 0,
@@ -1075,7 +1149,7 @@
         }
 
         function enableDatePickers() {
-            ['record_date_input', 'setting_start_date', 'sleep_time', 'wake_time'].forEach((id) => {
+            ['record_date_input', 'setting_start_date'].forEach((id) => {
                 const field = document.getElementById(id);
                 if (!field) return;
                 const openPicker = () => {
@@ -1091,6 +1165,7 @@
         // ===== 初始化 =====
         initData();
         sanitizeRecords(getRecords());
+        initTimeSelects();
         enableDatePickers();
         loadToday();
     </script>
